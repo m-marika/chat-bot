@@ -11,6 +11,12 @@ Bot for telegram
 
 ### Start
 
-Выполните команду `python main.py`
+run `python main.py`
 
 
+#### command:
+1) /start   
+  Hello, {user first name}!!!'
+
+2) /duck
+  generate random img with duck
