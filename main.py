@@ -4,7 +4,7 @@ import telebot
 from pydub import AudioSegment
 import speech_recognition
 import os
-from apis import get_random_duck
+from apis import get_random_duck, ask_chat_gpt
 
 AudioSegment.converter = "D:/ffmpeg/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe"
 AudioSegment.ffmpeg = "D:/ffmpeg/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe"
@@ -69,6 +69,12 @@ def say_hi(message):
 def duck(message):
     url = get_random_duck()
     bot.send_message(message.chat.id, text=url)
+
+
+@bot.message_handler(commands=['GPT'])
+def chat_gpt(message):
+    answer = ask_chat_gpt(message.text[4:])
+    bot.send_message(message.chat.id, text=answer)
 
 
 @bot.message_handler(content_types=['voice'])
