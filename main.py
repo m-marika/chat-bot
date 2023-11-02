@@ -5,6 +5,7 @@ from pydub import AudioSegment
 import speech_recognition
 import os
 from apis import get_random_duck, ask_chat_gpt
+from hangman import HangmanGame
 
 AudioSegment.converter = "D:/ffmpeg/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe"
 AudioSegment.ffmpeg = "D:/ffmpeg/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe"
@@ -19,6 +20,7 @@ urlButton = InlineKeyboardButton(text='Blog Skillbox', url='https://skillbox.ru/
 urlButton2 = InlineKeyboardButton(text='Lesson Skillbox', url='https://skillbox.ru/code/')
 urlKb.add(urlButton, urlButton2)
 
+hg = HangmanGame()
 
 def oga2wav(filename):
     # Конвертация формата файлов
@@ -73,6 +75,22 @@ def duck(message):
 
 @bot.message_handler(commands=['GPT'])
 def chat_gpt(message):
+    answer = ask_chat_gpt(message.text[4:])
+    bot.send_message(message.chat.id, text=answer)
+
+
+@bot.message_handler(commands=['GPT'])
+def hangman(message):
+    if hg.game_on:
+        if len(message.text) > 1:
+            bot.send_message(message.chat.id, text = "only letter")
+            return
+        msg = hg.game_step()
+        bot.send_message(message.chat.id, text = msg)
+        return
+    if message.text == 'hangman':
+        hg.start()
+        text = f'Welcome! Try to win! \n {hg.info()}'
     answer = ask_chat_gpt(message.text[4:])
     bot.send_message(message.chat.id, text=answer)
 
