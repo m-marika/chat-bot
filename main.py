@@ -79,20 +79,19 @@ def chat_gpt(message):
     bot.send_message(message.chat.id, text=answer)
 
 
-@bot.message_handler(commands=['GPT'])
+@bot.message_handler()
 def hangman(message):
     if hg.game_on:
         if len(message.text) > 1:
             bot.send_message(message.chat.id, text = "only letter")
             return
-        msg = hg.game_step()
+        msg = hg.game_step(message.text)
         bot.send_message(message.chat.id, text = msg)
         return
     if message.text == 'hangman':
         hg.start()
         text = f'Welcome! Try to win! \n {hg.info()}'
-    answer = ask_chat_gpt(message.text[4:])
-    bot.send_message(message.chat.id, text=answer)
+        bot.send_message(message.chat.id, text=text)
 
 
 @bot.message_handler(content_types=['voice'])

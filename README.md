@@ -20,3 +20,6 @@ run `python main.py`
 
 2) /duck
   generate random img with duck
+
+3) hangman
+  start game

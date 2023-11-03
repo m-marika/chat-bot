@@ -24,6 +24,3 @@ def ask_chat_gpt(question):
   data = response.json()
   return data['choices'][0]['message']['content']
 
-
-print(response.status_code)
-print(response.json())

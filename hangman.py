@@ -38,7 +38,7 @@ class HangmanGame:
                     msg += f'\n Well done! You win! Word {self.word}'
                     self.game_on = False
                 else:
-                    msg += self.info
+                    msg += self.info()
                 return msg
             else:
                 msg = f'\n Wrong! \"{letter}\" not in word'
@@ -49,7 +49,7 @@ class HangmanGame:
                     msg += f'\n Right answer is {self.word}'
                     self.game_on = False
                 else:
-                    msg += self.info
+                    msg += self.info()
 
                 return msg
 
