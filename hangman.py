@@ -12,7 +12,7 @@ class HangmanGame:
         self.game_on = True
         self.used = []
         self.word = choice(WORDS)
-        self.so_far = ['-']*len(self.word)
+        self.so_far = ['_']*len(self.word)
         self.wrong = 0
         self.max_wrong = len(HANGMAN) - 1
 
