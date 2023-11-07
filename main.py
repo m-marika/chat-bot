@@ -6,6 +6,7 @@ import speech_recognition
 import os
 from apis import get_random_duck, ask_chat_gpt
 from hangman import HangmanGame
+from wiki import wiki_page, search_wiki
 
 AudioSegment.converter = "D:/ffmpeg/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe"
 AudioSegment.ffmpeg = "D:/ffmpeg/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe"
@@ -77,6 +78,27 @@ def duck(message):
 def chat_gpt(message):
     answer = ask_chat_gpt(message.text[4:])
     bot.send_message(message.chat.id, text=answer)
+
+
+@bot.callback_query_handler(func=lambda call: call.data)
+def answer(call):
+    title, summery, url = wiki_page(call.data)
+    bot.send_message(call.message.chat.id, text=title)
+    bot.send_message(call.message.chat.id, text=summery)
+    bot.send_message(call.message.chat.id, text=url)
+
+
+@bot.message_handler(commands=['wiki'])
+def wiki(message):
+    text = ' '.join(message.text.split(' ')[1:])
+    results = search_wiki(text)
+    markup = types.InlineKeyboardMarkup()
+
+    buttons = [types.InlineKeyboardButton(str(res), callback_data=str(res)) for res in results]
+    for res in buttons:
+        markup.add(res)
+    print(markup.as_json())
+    bot.send_message(message.chat.id, text='Results: ', reply_markup=markup)
 
 
 @bot.message_handler()

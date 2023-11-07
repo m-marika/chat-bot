@@ -22,5 +22,6 @@ def ask_chat_gpt(question):
           }
   response = requests.post(url,json=data,headers=headers)
   data = response.json()
+  print(data)
   return data['choices'][0]['message']['content']
 
