@@ -7,6 +7,7 @@ import os
 from apis import get_random_duck, ask_chat_gpt
 from hangman import HangmanGame
 from wiki import wiki_page, search_wiki
+from text_to_speech import text_to_speech, speech_to_text
 
 AudioSegment.converter = "D:/ffmpeg/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe"
 AudioSegment.ffmpeg = "D:/ffmpeg/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe"
@@ -88,6 +89,7 @@ def answer(call):
     bot.send_message(call.message.chat.id, text=url)
 
 
+# TODO: need to fix error
 @bot.message_handler(commands=['wiki'])
 def wiki(message):
     text = ' '.join(message.text.split(' ')[1:])
@@ -116,7 +118,24 @@ def hangman(message):
         bot.send_message(message.chat.id, text=text)
 
 
-@bot.message_handler(content_types=['voice'])
+@bot.message_handler(commands=['speech'])
+def speech(message):
+    text = ' '.join(message.text.split(' ')[1:])
+    text_to_speech(text)
+    with open('text_to_speech.mp3', 'rb') as f:
+        bot.send_audio(message.chat.id,f)
+
+
+@bot.message_handler(commands=['voice'])
+def voice(message):
+    file = bot.get_file(message.voice.file.id)
+    bytes = bot.download_file(file.file_path)
+    with open('voice.ogg', 'wb') as f:
+        f.write(bytes)
+    text = speech_to_text()
+    bot.send_message(message.chat.id, text=text)
+
+@bot.message_handler(content_types=['voice_old'])
 def transcript(message):
     # Функция, отправляющая текст в ответ на голосовое
     filename = download_file(bot, message.voice.file_id)
