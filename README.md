@@ -23,3 +23,9 @@ run `python main.py`
 
 3) hangman
   start game
+
+4) /speech
+generate your text to speech
+
+5) /voice
+generate your speech to text
