@@ -29,3 +29,6 @@ generate your text to speech
 
 5) /voice
 generate your speech to text
+
+6) /url
+some url 
