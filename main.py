@@ -4,6 +4,7 @@ from apis import get_random_duck, ask_chat_gpt
 from hangman import HangmanGame
 from wiki import wiki_page, search_wiki
 from text_to_speech import text_to_speech, speech_to_text
+import logging
 
 
 API_TOKEN = '6434503666:AAEz2Kg3h7e_xieY0zwouMpKmA2CzVfK1HM'
@@ -14,31 +15,44 @@ hg = HangmanGame()
 
 
 @bot.message_handler(commands=['url'])
-def wiki(message):
-  urlKb = InlineKeyboardMarkup(row_width=1)
-  urlButton = InlineKeyboardButton(text='GitHub', url='https://github.com/m-marika')
-  urlButton2 = InlineKeyboardButton(text='Google', url='https://google.com')
-  urlKb.add(urlButton, urlButton2)
-  bot.send_message(message.chat.id, text='Results: ', reply_markup=urlKb)
-
+def urls(message):
+  try:
+    url_kb = InlineKeyboardMarkup(row_width=1)
+    url_button1 = InlineKeyboardButton(text='GitHub', url='https://github.com/m-marika')
+    url_button2 = InlineKeyboardButton(text='Google', url='https://google.com')
+    url_kb.add(url_button1, url_button2)
+    bot.send_message(message.chat.id, text='Visit the following links:', reply_markup=url_kb)
+  except Exception as e:
+    bot.reply_to(message, f'An error occurred: {e}')
 
 @bot.message_handler(commands=['start'])
 def say_hi(message):
   # Функция, отправляющая "Привет" в ответ на команду /start
-  answer = f'Hello, {message.from_user.first_name}!!!'
-  bot.send_message(message.chat.id, text=answer)
+  try:
+    answer = f'Hello, {message.from_user.first_name}!!!'
+    bot.send_message(message.chat.id, text=answer)
+  except Exception as e:
+    bot.reply_to(message, f'An error occurred: {e}')
 
 
 @bot.message_handler(commands=['duck'])
 def duck(message):
-  url = get_random_duck()
-  bot.send_message(message.chat.id, text=url)
+  try:
+    url = get_random_duck()
+    bot.send_message(message.chat.id, text=url)
+  except Exception as e:
+    bot.reply_to(message, 'Oops! Something went wrong. Try one more time')
+    print(f"Error: {e}")
 
 
 @bot.message_handler(commands=['GPT'])
 def chat_gpt(message):
-  answer = ask_chat_gpt(message.text[4:])
-  bot.send_message(message.chat.id, text=answer)
+  try:
+    answer = ask_chat_gpt(message.text[4:])
+    bot.send_message(message.chat.id, text=answer)
+  except Exception as e:
+    bot.reply_to(message, 'Oops! Something went wrong. Try one more time')
+    print(f"Error: {e}")
 
 
 @bot.callback_query_handler(func=lambda call: call.data)
@@ -51,13 +65,17 @@ def answer(call):
 
 @bot.message_handler(commands=['wiki'])
 def wiki(message):
-  text = ' '.join(message.text.split(' ')[1:])
-  results = search_wiki(text)
-  markup = InlineKeyboardMarkup()
-  buttons = [InlineKeyboardButton(str(res), callback_data=str(res)) for res in results]
-  for res in buttons:
-      markup.add(res)
-  bot.send_message(message.chat.id, text='Results: ', reply_markup=markup)
+  try:
+    text = ' '.join(message.text.split(' ')[1:])
+    results = search_wiki(text)
+    markup = InlineKeyboardMarkup()
+    buttons = [InlineKeyboardButton(str(res), callback_data=str(res)) for res in results]
+    for res in buttons:
+        markup.add(res)
+    bot.send_message(message.chat.id, text='Results: ', reply_markup=markup)
+  except Exception as e:
+    bot.reply_to(message, 'Sorry, I could not fetch the wiki results.')
+    print(f"Error: {e}")
 
 
 @bot.message_handler()
