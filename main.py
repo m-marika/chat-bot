@@ -6,11 +6,14 @@ from wiki import wiki_page, search_wiki
 from text_to_speech import text_to_speech, speech_to_text
 import logging
 
+# Set up logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 API_TOKEN = '6434503666:AAEz2Kg3h7e_xieY0zwouMpKmA2CzVfK1HM'
 
 bot = telebot.TeleBot(API_TOKEN)
-
 hg = HangmanGame()
 
 
@@ -23,6 +26,7 @@ def urls(message):
     url_kb.add(url_button1, url_button2)
     bot.send_message(message.chat.id, text='Visit the following links:', reply_markup=url_kb)
   except Exception as e:
+    logger.exception("An error occurred in send_url function")  # This logs the stack trace
     bot.reply_to(message, f'An error occurred: {e}')
 
 @bot.message_handler(commands=['start'])
@@ -33,6 +37,7 @@ def say_hi(message):
     bot.send_message(message.chat.id, text=answer)
   except Exception as e:
     bot.reply_to(message, f'An error occurred: {e}')
+    logger.error(f"Error: {e}")
 
 
 @bot.message_handler(commands=['duck'])
@@ -42,7 +47,7 @@ def duck(message):
     bot.send_message(message.chat.id, text=url)
   except Exception as e:
     bot.reply_to(message, 'Oops! Something went wrong. Try one more time')
-    print(f"Error: {e}")
+    logger.error(f"Error: {e}")
 
 
 @bot.message_handler(commands=['GPT'])
@@ -52,7 +57,7 @@ def chat_gpt(message):
     bot.send_message(message.chat.id, text=answer)
   except Exception as e:
     bot.reply_to(message, 'Oops! Something went wrong. Try one more time')
-    print(f"Error: {e}")
+    logger.error(f"Error: {e}")
 
 
 @bot.callback_query_handler(func=lambda call: call.data)
@@ -75,7 +80,7 @@ def wiki(message):
     bot.send_message(message.chat.id, text='Results: ', reply_markup=markup)
   except Exception as e:
     bot.reply_to(message, 'Sorry, I could not fetch the wiki results.')
-    print(f"Error: {e}")
+    logger.error(f"Error: {e}")
 
 
 @bot.message_handler()
@@ -95,23 +100,35 @@ def hangman(message):
 
 @bot.message_handler(commands=['speech'])
 def speech(message):
-  print('in speech')
-  text = ' '.join(message.text.split(' ')[1:])
-  print(text)
-  text_to_speech(text)
-  with open('text_to_speech.mp3', 'rb') as f:
-      bot.send_audio(message.chat.id,f)
+  try:
+    print('in speech')
+    text = ' '.join(message.text.split(' ')[1:])
+    print(text)
+    text_to_speech(text)
+    with open('text_to_speech.mp3', 'rb') as f:
+        bot.send_audio(message.chat.id,f)
+  except Exception as e:
+    logger.exception("An unhandled exception")
+    logger.error(f"Error: {e}")
 
 
 @bot.message_handler(commands=['voice'])
 def voice(message):
-  file = bot.get_file(message.voice.file.id)
-  bytes = bot.download_file(file.file_path)
-  with open('voice.ogg', 'wb') as f:
-      f.write(bytes)
-  text = speech_to_text()
-  bot.send_message(message.chat.id, text=text)
+  try:
+    file = bot.get_file(message.voice.file.id)
+    bytes = bot.download_file(file.file_path)
+    with open('voice.ogg', 'wb') as f:
+        f.write(bytes)
+    text = speech_to_text()
+    bot.send_message(message.chat.id, text=text)
+  except Exception as e:
+    logger.exception("An unhandled exception")
+    logger.error(f"Error: {e}")
 
 
 if __name__ == '__main__':
-  bot.polling(non_stop=True)
+  try:
+    bot.polling(non_stop=True)
+  except Exception as e:
+    logger.exception("An unhandled exception")
+    logger.error(f"Error: {e}")
