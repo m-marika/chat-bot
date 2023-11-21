@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from telebot.types import User, Chat, InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import User, Chat, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 import main
 
@@ -67,6 +67,7 @@ class TestBot(unittest.TestCase):
     # Assert bot sent the correct message
     mock_bot.send_message.assert_called_once_with(123, text='http://random-duck-url.com')
 
+
   @patch('main.get_random_duck', side_effect=Exception('Test exception'))
   @patch('main.bot')
   @patch('main.logger')
@@ -84,6 +85,48 @@ class TestBot(unittest.TestCase):
 
     # Assert the exception was logged
     mock_logger.error.assert_called_once_with('Error: Test exception')
+
+
+  @patch('main.bot')
+  @patch('main.wiki_page', return_value=('Title', 'Summary', 'URL'))
+  def test_answer(self, wiki_page_mock, bot_mock):
+    # Create a mock CallbackQuery object
+    call = MagicMock(spec=CallbackQuery)
+    call.data = 'query data'
+    call.message = MagicMock()
+    call.message.chat = MagicMock()
+    call.message.chat.id = 123
+
+    main.answer(call)
+
+    # Assertions to ensure wiki_page is called and messages are sent
+    wiki_page_mock.assert_called_once_with(call.data)
+    bot_mock.send_message.assert_any_call(123, text='Title')
+    bot_mock.send_message.assert_any_call(123, text='Summary')
+    bot_mock.send_message.assert_any_call(123, text='URL')
+
+  @patch('main.bot')
+  @patch('main.search_wiki', return_value=['Result1', 'Result2'])
+  def test_wiki(self, search_wiki_mock, bot_mock):
+    # Create a mock Message object
+    message = MagicMock(spec=main.telebot.types.Message)
+    message.text = '/wiki search_term'
+    message.chat = MagicMock()
+    message.chat.id = 123
+
+    main.wiki(message)
+
+    # Assertions to check the correct methods are called
+    search_wiki_mock.assert_called_once_with('search_term')
+    bot_mock.send_message.assert_called_once()
+
+    # Verify that the markup is constructed properly
+    args, kwargs = bot_mock.send_message.call_args
+    markup = kwargs['reply_markup']
+    self.assertIsInstance(markup, InlineKeyboardMarkup)
+    self.assertEqual(len(markup.keyboard), 2)  # Assuming there are 2 results
+    for button in markup.keyboard:
+        self.assertIsInstance(button[0], InlineKeyboardButton)
 
 if __name__ == '__main__':
     unittest.main()
