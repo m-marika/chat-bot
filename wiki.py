@@ -1,12 +1,13 @@
+import asyncio
 import wikipedia
 
-  # TODO: add select language!
 wikipedia.set_lang('ru')
 
-def search_wiki(query):
-  return wikipedia.search(query)
+async def search_wiki(query):
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, wikipedia.search, query)
 
-
-def wiki_page(page_name):
-  page = wikipedia.page(page_name)
-  return page.title, page.summary, page.url
+async def wiki_page(page_name):
+    loop = asyncio.get_running_loop()
+    page = await loop.run_in_executor(None, wikipedia.page, page_name)
+    return page.title, page.summary, page.url
