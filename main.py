@@ -4,7 +4,7 @@ from aiogram.utils import executor
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from apis import get_random_duck, ask_chat_gpt
 from hangman import HangmanGame
-from wiki import wiki_page, search_wiki
+from wiki import wiki_page, search_wiki, set_language
 from text_to_speech import text_to_speech, speech_to_text
 import logging
 
@@ -62,6 +62,17 @@ async def chat_gpt(message: types.Message):
   except Exception as e:
     await message.answer('Oops! Something went wrong. Try one more time')
     logger.error(f"Error: {e}")
+
+
+@dp.message_handler(commands=['setlang'])
+async def set_language_command(message: types.Message):
+    try:
+        lang_code = message.text.split(' ')[1]
+        await set_language(lang_code)
+        await message.answer(f'Language set to {lang_code}.')
+    except Exception as e:
+        await message.answer('Failed to set language.')
+        logger.error(f"Error: {e}")
 
 
 @dp.callback_query_handler(func=lambda call: call.data)
