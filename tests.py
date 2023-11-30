@@ -14,16 +14,30 @@ class TestBot(unittest.TestCase):
     chat = Chat(id=123, type='private')
 
     # Create a Message object by creating a MagicMock, setting attributes needed
-    message = MagicMock(spec=main.telebot.types.Message)
+    message = MagicMock(spec=main.types.Message)
     message.chat = chat
     message.from_user = user
     message.text = '/start'
 
-    # Call the /start command
     main.say_hi(message)
 
     # Assert that the bot sent the correct message
     mock_bot.send_message.assert_called_with(123, text='Hello, John!!!')
+
+
+  @patch('main.bot')
+  def test_start_command_error(self, mock_bot):
+      # Mock a message object with necessary attributes
+      message = MagicMock()
+      message.chat.id = 123
+      message.from_user.first_name = 'John'
+
+      # Simulate an exception during command execution
+      with patch.object(main, 'say_hi', side_effect=Exception('Test start exception')):
+          main.say_hi(message)
+
+      # Assert bot sent the error message
+      mock_bot.reply_to.assert_called_once_with(message, 'An error occurred: Test start exception')
 
 
   @patch('main.bot.send_message')
@@ -109,7 +123,7 @@ class TestBot(unittest.TestCase):
   @patch('main.search_wiki', return_value=['Result1', 'Result2'])
   def test_wiki(self, search_wiki_mock, bot_mock):
     # Create a mock Message object
-    message = MagicMock(spec=main.telebot.types.Message)
+    message = MagicMock(spec=main.types.Message)
     message.text = '/wiki search_term'
     message.chat = MagicMock()
     message.chat.id = 123
@@ -127,6 +141,35 @@ class TestBot(unittest.TestCase):
     self.assertEqual(len(markup.keyboard), 2)  # Assuming there are 2 results
     for button in markup.keyboard:
         self.assertIsInstance(button[0], InlineKeyboardButton)
+
+
+  @patch('main.bot')
+  @patch('main.ask_chat_gpt', side_effect=Exception('Test GPT exception'))
+  def test_gpt_command_error(self, mock_ask_chat_gpt, mock_bot):
+      # Mock a message object with necessary attributes
+      message = MagicMock()
+      message.text = '/GPT ask something'
+      message.chat.id = 123
+
+      main.chat_gpt(message)
+
+      mock_bot.reply_to.assert_called_once_with(message, 'Oops! Something went wrong. Try one more time')
+
+
+  @patch('main.bot')
+  def test_set_language_command_success(self, mock_bot):
+      # Mock a message object with necessary attributes
+      message = MagicMock()
+      message.text = '/setlang en'
+      message.chat.id = 123
+
+      # Simulate setting language success
+      with patch.object(main, 'set_language', return_value=True):
+          main.set_language_command(message)
+
+      # Assert bot sent confirmation message
+      mock_bot.send_message.assert_called_once_with(123, 'Language set to en.')
+
 
 if __name__ == '__main__':
     unittest.main()
