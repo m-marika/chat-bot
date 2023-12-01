@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, mock_open
 from telebot.types import User, Chat, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 import main
@@ -169,6 +169,54 @@ class TestBot(unittest.TestCase):
 
       # Assert bot sent confirmation message
       mock_bot.send_message.assert_called_once_with(123, 'Language set to en.')
+
+  @patch('main.bot')
+  def test_hangman_start(self, mock_bot):
+      # Mock a message object with necessary attributes
+      message = MagicMock()
+      message.text = 'hangman'
+      message.chat.id = 123
+
+      main.hangman(message)
+
+      # Assert game started and welcome message sent
+      welcome_text = f'Welcome! Try to win! \n {main.hg.info()}'
+      mock_bot.send_message.assert_called_once_with(123, text=welcome_text)
+
+
+  @patch('main.bot')
+  def test_hangman_guess(self, mock_bot):
+      # Mock a message object with necessary attributes
+      message = MagicMock()
+      message.text = 'a'
+      message.chat.id = 123
+
+      # Setup the hangman game as ongoing
+      main.hg.game_on = True
+
+      main.hangman(message)
+
+      # Assert game step is processed
+      expected_response = 'Some game step response'
+      mock_bot.send_message.assert_called_once_with(123, text=expected_response)
+
+
+  @patch('main.bot')
+  def test_speech_command(self, mock_bot):
+      # Mock a message object with necessary attributes
+      message = MagicMock()
+      message.text = '/speech Hello'
+      message.chat.id = 123
+
+      # Simulate text_to_speech function and file opening
+      with patch('main.text_to_speech') as mock_text_to_speech, \
+          patch('builtins.open', mock_open(read_data='audio data')) as mock_file:
+          main.speech(message)
+
+      mock_text_to_speech.assert_called_once_with('Hello')
+
+      # Assert bot sent the audio message
+      mock_bot.send_audio.assert_called_once()
 
 
 if __name__ == '__main__':
