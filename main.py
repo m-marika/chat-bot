@@ -38,7 +38,7 @@ async def say_hi(message: types.Message):
   # Функция, отправляющая "Привет" в ответ на команду /start
   try:
     answer = f'Hello, {message.from_user.first_name}!!!'
-    await message.answer(answer)
+    await bot.send_message(message.chat.id, answer)
   except Exception as e:
     await message.answer(f'An error occurred: {e}')
     logger.error(f"Error: {e}")
@@ -75,7 +75,7 @@ async def set_language_command(message: types.Message):
         logger.error(f"Error: {e}")
 
 
-@dp.callback_query_handler(func=lambda call: call.data)
+@dp.callback_query_handler(lambda call: call.data)
 async def answer(call: types.CallbackQuery):
     title, summery, url = await wiki_page(call.data)
     await call.message.answer(call.message.chat.id, text=title)
