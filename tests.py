@@ -21,19 +21,20 @@ class TestBot(unittest.IsolatedAsyncioTestCase):
     mock_send_message.assert_called_with(123, 'Hello, John!!!')
 
 
-  @patch('main.bot', new_callable=AsyncMock)
+  @patch('main.bot.send_message', new_callable=AsyncMock)
   async def test_start_command_error(self, mock_send_message):
-    message = AsyncMock()
-    message.chat.id = 123
-    message.from_user.first_name = 'John'
-    message.answer = AsyncMock()
+      message = AsyncMock()
+      message.chat.id = 123
+      message.from_user.first_name = 'John'
+      message.answer = AsyncMock()
 
-    with patch('main.say_hi', side_effect=Exception('Test start exception')):
-        await main.say_hi(message)
+      # Make bot.send_message throw an exception
+      mock_send_message.side_effect = Exception('Test start exception')
 
-    print(mock_send_message.mock_calls)
+      await main.say_hi(message)
 
-    message.answer.assert_called_once_with('An error occurred: Test start exception')
+      # Check if the error message was sent
+      message.answer.assert_called_once_with('An error occurred: Test start exception')
 
   @patch('main.bot.send_message', new_callable=AsyncMock)
   async def test_urls_command(self, mock_send_message):
@@ -67,44 +68,49 @@ class TestBot(unittest.IsolatedAsyncioTestCase):
     mock_get_random_duck.assert_called_once()
     mock_bot.send_message.assert_called_once_with(123, text='http://random-duck-url.com')
 
-
+  #TODO: fix
   @patch('main.get_random_duck', side_effect=Exception('Test exception'))
   @patch('main.bot', new_callable=AsyncMock)
   @patch('main.logger')
   async def test_duck_failure(self, mock_logger, mock_bot, mock_get_random_duck):
     # Create a fake Message object
-    chat = AsyncMock()
-    chat.id = 123
     message = AsyncMock()
+    message.chat.id = 123
+    message.answer = AsyncMock()
 
     await main.duck(message)
 
-    # Assert bot sent the error message
-    mock_bot.reply_to.assert_called_once_with(message, 'Oops! Something went wrong. Try one more time')
+    # Check the actual calls to message.answer
+    print("Actual calls to message.answer:", message.answer.call_args_list)
 
+    # Assert bot sent the error message
+    message.answer.assert_called_once_with('Oops! Something went wrong. Try one more time')
     # Assert the exception was logged
     mock_logger.error.assert_called_once_with('Error: Test exception')
 
 
-  @patch('main.bot', new_callable=AsyncMock)
   @patch('main.wiki_page', return_value=('Title', 'Summary', 'URL'))
-  async def test_answer(self, wiki_page_mock, bot_mock):
+  async def test_answer(self, wiki_page_mock):
     # Create a mock CallbackQuery object
-    call = AsyncMock(spec=CallbackQuery)
-    call.data = 'query data'
-    call.message = AsyncMock()
-    call.message.chat = AsyncMock()
-    call.message.chat.id = 123
+    call_mock = AsyncMock(spec=CallbackQuery)
+    call_mock.data = 'query data'
+    call_mock.message = AsyncMock()
+    call_mock.message.chat = AsyncMock()
+    call_mock.message.chat.id = 123
+    call_mock.message.answer = AsyncMock()
 
-    await main.answer(call)
+    await main.answer(call_mock)
 
     # Assertions to ensure wiki_page is called and messages are sent
-    wiki_page_mock.assert_called_once_with(call.data)
-    bot_mock.send_message.assert_has_calls([
-        call(123, text='Title'),
-        call(123, text='Summary'),
-        call(123, text='URL')
-    ])
+    wiki_page_mock.assert_called_once_with(call_mock.data)
+    expected_calls = [
+      call_mock.message.answer.call_args_list[0](123, text='Title'),
+      call_mock.message.answer.call_args_list[1](123, text='Summary'),
+      call_mock.message.answer.call_args_list[2](123, text='URL')
+    ]
+    print('expected_calls: ', expected_calls)
+
+    call_mock.message.answer.assert_has_calls(expected_calls, any_order=False)
 
   @patch('main.bot')
   @patch('main.search_wiki', return_value=['Result1', 'Result2'])
